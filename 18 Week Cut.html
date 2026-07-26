@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>18-week logbook</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+<style>
+  :root{
+    --ink:#1c1b19; --paper:#f6f4ee; --card:#ffffff; --line:#dedad0;
+    --muted:#8a8577; --gym:#b5502e; --nutrition:#3d6b4f; --steps:#2f5f8a; --sleep:#5b4a8a;
+    --gym-bg:#f6e6de; --nutrition-bg:#e2ede2; --steps-bg:#dfe9f2; --sleep-bg:#e7e2f2;
+    --weight:#96702f; --weight-bg:#f0e6d3;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --ink:#efece3; --paper:#161513; --card:#201f1c; --line:#37342c;
+      --muted:#9c968a; --gym:#e3936f; --nutrition:#8fbf9d; --steps:#8fb7de; --sleep:#b3a2e0;
+      --gym-bg:#3a281f; --nutrition-bg:#243228; --steps-bg:#1f2e3c; --sleep-bg:#2c2440;
+      --weight:#d1ab6b; --weight-bg:#3a3121;
+    }
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:'Segoe UI',system-ui,sans-serif;padding:2rem 1.25rem 5rem;}
+  .wrap{max-width:920px;margin:0 auto;}
+  h1{font-family:Georgia,'Times New Roman',serif;font-weight:400;font-size:2rem;margin:0 0 .2rem;letter-spacing:-0.01em;}
+  .sub{color:var(--muted);font-size:.9rem;margin:0 0 1.5rem;}
+
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1.5rem;}
+  .toolbar button, .toolbar label.file-btn{
+    display:inline-flex;align-items:center;gap:6px;
+    border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);
+    padding:.5rem .8rem;font-size:.8rem;cursor:pointer;font-family:inherit;
+  }
+  .toolbar button:hover, .toolbar label.file-btn:hover{border-color:var(--muted);}
+  .toolbar input[type=file]{display:none;}
+
+  .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:.4rem;}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.85rem .7rem;text-align:center;}
+  .stat i{font-size:1.15rem;}
+  .stat .pct{font-family:Georgia,serif;font-size:1.4rem;display:block;margin:.25rem 0 .1rem;}
+  .stat .lbl{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
+  .stat .streak{font-size:.68rem;color:var(--muted);display:block;}
+  .progress-note{font-size:.8rem;color:var(--muted);margin:0 0 .3rem;text-align:center;}
+  .save-status{font-size:.72rem;margin:0 0 2rem;text-align:center;color:var(--muted);min-height:1em;}
+  .save-status.pending{color:var(--steps);}
+  .save-status.error{color:var(--gym);}
+  .save-status.ok{color:var(--nutrition);}
+
+  .phase-band{display:flex;border-radius:8px;overflow:hidden;margin-bottom:2.5rem;font-size:.72rem;text-align:center;color:var(--muted);}
+  .phase-band div{padding:.4rem 0;border-right:1px solid var(--paper);}
+  .phase-band div:last-child{border-right:none;}
+  .phase-band .maint{background:var(--steps-bg);flex:2;}
+  .phase-band .cut{background:var(--gym-bg);flex:11;}
+  .phase-band .bulk{background:var(--nutrition-bg);flex:5;}
+
+  .week{margin-bottom:.9rem;}
+  .week-head{
+    display:flex;align-items:baseline;justify-content:space-between;gap:8px;
+    padding:.55rem .2rem;border-bottom:1px solid var(--line);cursor:pointer;user-select:none;
+  }
+  .week.current .week-head{border-bottom-color:var(--gym);}
+  .week-head h2{font-size:.95rem;font-weight:600;margin:0;display:flex;align-items:center;gap:6px;}
+  .week-head h2 i{font-size:.75rem;color:var(--muted);transition:transform .15s ease;}
+  .week.expanded .week-head h2 i{transform:rotate(90deg);}
+  .week-head .tag{font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-right:auto;margin-left:10px;}
+  .week-head .wk-avg{font-size:.75rem;color:var(--muted);white-space:nowrap;}
+  .week-body{display:none;padding-top:.4rem;}
+  .week.expanded .week-body{display:block;}
+
+  .day-row{display:grid;grid-template-columns:78px 1fr 88px 76px 76px 76px;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);}
+  .day-row.today{background:var(--card);border-radius:8px;}
+  .day-row .dwhen{font-size:.78rem;}
+  .day-row .dwhen .dname{color:var(--muted);text-transform:uppercase;font-size:.62rem;display:block;}
+  .field{display:flex;flex-direction:column;gap:2px;}
+  .field label{font-size:.6rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);}
+  .field select, .field input{
+    border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--ink);
+    padding:.35rem .3rem;font-size:.8rem;width:100%;
+  }
+  .gymfield select{color:var(--gym);}
+  .gymfield select.set{background:var(--gym-bg);border-color:var(--gym);font-weight:600;}
+  .nutrifield button{
+    border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--muted);
+    padding:.4rem .3rem;font-size:.75rem;width:100%;cursor:pointer;
+  }
+  .nutrifield button.on{background:var(--nutrition-bg);color:var(--nutrition);border-color:var(--nutrition);font-weight:600;}
+  .stepsfield input{color:var(--steps);}
+  .stepsfield input.set{background:var(--steps-bg);border-color:var(--steps);}
+  .sleepfield input{color:var(--sleep);}
+  .sleepfield input.set{background:var(--sleep-bg);border-color:var(--sleep);}
+  .weightfield input{color:var(--weight);}
+  .weightfield input.set{background:var(--weight-bg);border-color:var(--weight);}
+  .future{opacity:.55;}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;font-size:.75rem;color:var(--muted);margin-bottom:2rem;}
+  .legend span{display:flex;align-items:center;gap:5px;}
+  @media (max-width:640px){
+    .stats{grid-template-columns:repeat(2,1fr);}
+    .day-row{grid-template-columns:1fr 1fr;grid-auto-rows:auto;row-gap:6px;}
+    .day-row .dwhen{grid-column:1/-1;font-size:.85rem;}
+    .week-head .tag{margin-left:0;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>18-week logbook</h1>
+  <p class="sub">27 Jul 2026 — 22 Nov 2026 · maintenance → cut → recomp</p>
+
+  <div class="toolbar">
+    <button id="jumpToday"><i class="ti ti-calendar-time"></i> Jump to today</button>
+    <button id="expandAll"><i class="ti ti-chevrons-down"></i> Expand all</button>
+    <button id="collapseAll"><i class="ti ti-chevrons-up"></i> Collapse all</button>
+    <button id="exportBtn"><i class="ti ti-download"></i> Export data</button>
+    <label class="file-btn" for="importFile"><i class="ti ti-upload"></i> Import data</label>
+    <input type="file" id="importFile" accept="application/json">
+  </div>
+
+  <div class="stats" id="stats"></div>
+  <p class="progress-note" id="progressNote"></p>
+  <p class="save-status" id="saveStatus"></p>
+
+  <div class="phase-band">
+    <div class="maint">maintenance</div>
+    <div class="cut">cut</div>
+    <div class="bulk">recomp / bulk</div>
+  </div>
+
+  <div class="legend">
+    <span><i class="ti ti-barbell" style="color:var(--gym)"></i> gym</span>
+    <span><i class="ti ti-apple" style="color:var(--nutrition)"></i> nutrition</span>
+    <span><i class="ti ti-shoe" style="color:var(--steps)"></i> steps</span>
+    <span><i class="ti ti-moon-stars" style="color:var(--sleep)"></i> sleep</span>
+    <span><i class="ti ti-scale" style="color:var(--weight)"></i> bodyweight</span>
+  </div>
+
+  <div id="weeks"></div>
+</div>
+
+<script>
+const WORKOUTS = ['', 'Push', 'Pull', 'Legs', 'Upper', 'Lower', 'Other'];
+const START = new Date(2026,6,27); // 27 Jul 2026, local, midnight
+START.setHours(0,0,0,0);
+const TOTAL_DAYS = 18*7;
+const DAY_MS = 86400000;
+let data = {}; // { 'YYYY-MM-DD': {gym:'Push', nutrition:true, steps:12000, sleep:7.5} }
+let expandedWeeks = new Set();
+
+// Local (not UTC) date key — avoids the day shifting near midnight in timezones behind UTC.
+function dkey(d){
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+function addDays(base,n){
+  const d = new Date(base);
+  d.setDate(d.getDate()+n);
+  return d;
+}
+function todayLocal(){
+  const t = new Date();
+  t.setHours(0,0,0,0);
+  return t;
+}
+function weekOfDate(date){
+  return Math.floor((date - START)/DAY_MS/7) + 1;
+}
+function phaseFor(weekNum){
+  if(weekNum<=2) return 'maintenance';
+  if(weekNum<=13) return 'cut';
+  return 'recomp / bulk';
+}
+function entry(key){
+  if(!data[key]) data[key] = {gym:'', nutrition:false, steps:null, sleep:null, weight:null};
+  return data[key];
+}
+
+async function loadData(){
+  try{
+    const res = await window.storage.get('tracker-data', false);
+    if(res && res.value) data = JSON.parse(res.value);
+  }catch(e){ data = {}; }
+}
+let saveTimer = null;
+let saveToken = 0;
+
+function setStatus(cls, text){
+  const el = document.getElementById('saveStatus');
+  if(!el) return;
+  el.className = 'save-status' + (cls ? ' ' + cls : '');
+  el.textContent = text;
+}
+
+function scheduleSave(){
+  setStatus('pending', 'Saving…');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(()=> doSave(++saveToken), 600);
+}
+
+async function doSave(token, attempt=1){
+  try{
+    await window.storage.set('tracker-data', JSON.stringify(data), false);
+    if(token === saveToken) setStatus('ok', 'Saved');
+  }catch(e){
+    console.error('save failed', e);
+    if(token !== saveToken) return; // a newer change superseded this attempt
+    if(attempt < 4){
+      setStatus('pending', `Saving… retry ${attempt}`);
+      setTimeout(()=> doSave(token, attempt+1), attempt * 800);
+    }else{
+      setStatus('error', 'Save failed — check connection and try again');
+    }
+  }
+}
+
+function weekSummary(w){
+  const weekStart = addDays(START,(w-1)*7);
+  const today = todayLocal();
+  let gymD=0, nutriD=0, possible=0, stepsSum=0, stepsN=0, sleepSum=0, sleepN=0, weightSum=0, weightN=0;
+  for(let d=0; d<7; d++){
+    const date = addDays(weekStart,d);
+    if(date>today) continue;
+    possible++;
+    const e = data[dkey(date)];
+    if(e){
+      if(e.gym) gymD++;
+      if(e.nutrition) nutriD++;
+      if(e.steps!=null){ stepsSum+=e.steps; stepsN++; }
+      if(e.sleep!=null){ sleepSum+=e.sleep; sleepN++; }
+      if(e.weight!=null){ weightSum+=e.weight; weightN++; }
+    }
+  }
+  return { possible, gymD, nutriD, stepsAvg: stepsN? Math.round(stepsSum/stepsN):null, sleepAvg: sleepN? (sleepSum/sleepN).toFixed(1):null, weightAvg: weightN? (weightSum/weightN).toFixed(1):null };
+}
+
+function render(){
+  const weeksEl = document.getElementById('weeks');
+  weeksEl.innerHTML = '';
+  const today = todayLocal();
+  const currentWeek = Math.min(18, Math.max(1, weekOfDate(today)));
+
+  for(let w=1; w<=18; w++){
+    const weekStart = addDays(START,(w-1)*7);
+    const isCurrent = (w === currentWeek);
+    const section = document.createElement('div');
+    section.className = 'week' + (isCurrent?' current':'') + (expandedWeeks.has(w)?' expanded':'');
+    section.dataset.week = w;
+
+    const summary = weekSummary(w);
+    const summaryText = summary.possible>0
+      ? `Gym ${Math.round((summary.gymD/summary.possible)*100)}% · Nutrition ${Math.round((summary.nutriD/summary.possible)*100)}%`
+      : '';
+
+    const head = document.createElement('div');
+    head.className = 'week-head';
+    head.innerHTML = `
+      <h2><i class="ti ti-chevron-right"></i> Week ${w}</h2>
+      <span class="tag">${phaseFor(w)}</span>
+      <span class="wk-avg">${summaryText}</span>`;
+    head.addEventListener('click', ()=>{
+      section.classList.toggle('expanded');
+      if(section.classList.contains('expanded')) expandedWeeks.add(w);
+      else expandedWeeks.delete(w);
+    });
+    section.appendChild(head);
+
+    const body = document.createElement('div');
+    body.className = 'week-body';
+    const rows = document.createElement('div');
+    for(let d=0; d<7; d++){
+      const date = addDays(weekStart,d);
+      const key = dkey(date);
+      const e = entry(key);
+      const isFuture = date > today;
+      const isToday = date.getTime() === today.getTime();
+      const row = document.createElement('div');
+      row.className = 'day-row' + (isToday?' today':'') + (isFuture?' future':'');
+      if(isToday) row.id = 'today-row';
+      const dname = date.toLocaleDateString('en-GB',{weekday:'short'});
+      const dnum = date.getDate() + ' ' + date.toLocaleDateString('en-GB',{month:'short'});
+
+      row.innerHTML = `
+        <div class="dwhen"><span class="dname">${dname}</span>${dnum}</div>
+        <div class="field gymfield">
+          <label>Gym</label>
+          <select data-key="${key}" data-cat="gym">
+            ${WORKOUTS.map(o=>`<option value="${o}" ${e.gym===o?'selected':''}>${o||'—'}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field nutrifield">
+          <label>Nutrition</label>
+          <button data-key="${key}" data-cat="nutrition" class="${e.nutrition?'on':''}">${e.nutrition?'On track':'Off track'}</button>
+        </div>
+        <div class="field stepsfield">
+          <label>Steps</label>
+          <input type="number" min="0" step="500" placeholder="steps" data-key="${key}" data-cat="steps" value="${e.steps??''}">
+        </div>
+        <div class="field sleepfield">
+          <label>Sleep (hrs)</label>
+          <input type="number" min="0" step="0.5" placeholder="hrs" data-key="${key}" data-cat="sleep" value="${e.sleep??''}">
+        </div>
+        <div class="field weightfield">
+          <label>Weight</label>
+          <input type="number" min="0" step="0.1" placeholder="kg" data-key="${key}" data-cat="weight" value="${e.weight??''}">
+        </div>`;
+      rows.appendChild(row);
+    }
+    body.appendChild(rows);
+    section.appendChild(body);
+    weeksEl.appendChild(section);
+  }
+
+  weeksEl.querySelectorAll('select[data-cat="gym"]').forEach(sel=>{
+    if(sel.value) sel.classList.add('set');
+    sel.addEventListener('change', ()=>{
+      entry(sel.dataset.key).gym = sel.value;
+      sel.classList.toggle('set', !!sel.value);
+      scheduleSave(); renderStats(); refreshWeekSummaries();
+    });
+  });
+  weeksEl.querySelectorAll('button[data-cat="nutrition"]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const e = entry(btn.dataset.key);
+      e.nutrition = !e.nutrition;
+      btn.classList.toggle('on', e.nutrition);
+      btn.textContent = e.nutrition ? 'On track' : 'Off track';
+      scheduleSave(); renderStats(); refreshWeekSummaries();
+    });
+  });
+  weeksEl.querySelectorAll('input[data-cat="steps"], input[data-cat="sleep"], input[data-cat="weight"]').forEach(inp=>{
+    if(inp.value) inp.classList.add('set');
+    inp.addEventListener('change', ()=>{
+      const e = entry(inp.dataset.key);
+      const val = inp.value === '' ? null : parseFloat(inp.value);
+      e[inp.dataset.cat] = val;
+      inp.classList.toggle('set', val!==null);
+      scheduleSave(); renderStats(); refreshWeekSummaries();
+    });
+  });
+
+  renderStats();
+}
+
+function refreshWeekSummaries(){
+  document.querySelectorAll('.week').forEach(section=>{
+    const w = parseInt(section.dataset.week,10);
+    const summary = weekSummary(w);
+    const summaryText = summary.possible>0
+      ? `Gym ${Math.round((summary.gymD/summary.possible)*100)}% · Nutrition ${Math.round((summary.nutriD/summary.possible)*100)}%`
+      : '';
+    const el = section.querySelector('.wk-avg');
+    if(el) el.textContent = summaryText;
+  });
+}
+
+function streakFor(cat){
+  // Counts consecutive days ending at the most recent logged day (today or the day before).
+  const today = todayLocal();
+  let streak = 0;
+  let d = today;
+  // if today has no entry yet for this category, start counting from yesterday instead
+  const todayEntry = data[dkey(today)];
+  if(!todayEntry || !todayEntry[cat]) d = addDays(today,-1);
+  while(d >= START){
+    const e = data[dkey(d)];
+    if(e && e[cat]) { streak++; d = addDays(d,-1); }
+    else break;
+  }
+  return streak;
+}
+
+function renderStats(){
+  const today = todayLocal();
+  const elapsed = Math.min(TOTAL_DAYS, Math.max(0, Math.floor((today-START)/DAY_MS)+1));
+  const statsEl = document.getElementById('stats');
+  const note = document.getElementById('progressNote');
+  if(elapsed<=0){
+    statsEl.innerHTML = `
+      <div class="stat"><i class="ti ti-barbell" style="color:var(--gym)"></i><span class="pct">—</span><span class="lbl">Gym</span></div>
+      <div class="stat"><i class="ti ti-apple" style="color:var(--nutrition)"></i><span class="pct">—</span><span class="lbl">Nutrition</span></div>
+      <div class="stat"><i class="ti ti-shoe" style="color:var(--steps)"></i><span class="pct">—</span><span class="lbl">Steps</span></div>
+      <div class="stat"><i class="ti ti-moon-stars" style="color:var(--sleep)"></i><span class="pct">—</span><span class="lbl">Sleep</span></div>
+      <div class="stat"><i class="ti ti-scale" style="color:var(--weight)"></i><span class="pct">—</span><span class="lbl">Weight</span></div>`;
+    note.textContent = 'Plan starts 27 Jul 2026 — averages appear once the plan is underway';
+    return;
+  }
+  let gymDays=0, nutriDays=0, stepsSum=0, stepsN=0, sleepSum=0, sleepN=0, weightSum=0, weightN=0, weightLast=null;
+  for(let i=0;i<elapsed;i++){
+    const key = dkey(addDays(START,i));
+    const e = data[key];
+    if(!e) continue;
+    if(e.gym) gymDays++;
+    if(e.nutrition) nutriDays++;
+    if(e.steps!=null){ stepsSum+=e.steps; stepsN++; }
+    if(e.sleep!=null){ sleepSum+=e.sleep; sleepN++; }
+    if(e.weight!=null){ weightSum+=e.weight; weightN++; weightLast=e.weight; }
+  }
+  const gymPct = Math.round((gymDays/elapsed)*100);
+  const nutriPct = Math.round((nutriDays/elapsed)*100);
+  const stepsAvg = stepsN>0 ? Math.round(stepsSum/stepsN).toLocaleString() : '—';
+  const sleepAvg = sleepN>0 ? (sleepSum/sleepN).toFixed(1) : '—';
+  const weightLatest = weightLast!=null ? weightLast : '—';
+  const gymStreak = streakFor('gym');
+  const nutriStreak = streakFor('nutrition');
+
+  statsEl.innerHTML = `
+    <div class="stat"><i class="ti ti-barbell" style="color:var(--gym)"></i><span class="pct">${gymPct}%</span><span class="lbl">Gym</span><span class="streak">${gymStreak>0?`🔥 ${gymStreak}-day streak`:''}</span></div>
+    <div class="stat"><i class="ti ti-apple" style="color:var(--nutrition)"></i><span class="pct">${nutriPct}%</span><span class="lbl">Nutrition</span><span class="streak">${nutriStreak>0?`🔥 ${nutriStreak}-day streak`:''}</span></div>
+    <div class="stat"><i class="ti ti-shoe" style="color:var(--steps)"></i><span class="pct">${stepsAvg}</span><span class="lbl">Steps/day</span></div>
+    <div class="stat"><i class="ti ti-moon-stars" style="color:var(--sleep)"></i><span class="pct">${sleepAvg}</span><span class="lbl">Sleep hrs</span></div>
+    <div class="stat"><i class="ti ti-scale" style="color:var(--weight)"></i><span class="pct">${weightLatest}</span><span class="lbl">Weight (kg)</span></div>`;
+  note.textContent = `Day ${elapsed} of ${TOTAL_DAYS} · averages based on days elapsed so far`;
+}
+
+function jumpToToday(){
+  const today = todayLocal();
+  const w = Math.min(18, Math.max(1, weekOfDate(today)));
+  expandedWeeks.add(w);
+  const section = document.querySelector(`.week[data-week="${w}"]`);
+  if(section){
+    section.classList.add('expanded');
+    section.scrollIntoView({behavior:'smooth', block:'start'});
+    const row = document.getElementById('today-row');
+    if(row) row.scrollIntoView({behavior:'smooth', block:'center'});
+  }
+}
+
+function exportData(){
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const stamp = dkey(todayLocal());
+  a.href = url;
+  a.download = `logbook-backup-${stamp}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function importData(file){
+  const reader = new FileReader();
+  reader.onload = () => {
+    try{
+      const parsed = JSON.parse(reader.result);
+      if(typeof parsed !== 'object' || parsed === null) throw new Error('not an object');
+      data = parsed;
+      scheduleSave();
+      render();
+    }catch(e){
+      alert('Could not read that file — make sure it\'s a JSON export from this tracker.');
+    }
+  };
+  reader.readAsText(file);
+}
+
+document.getElementById('jumpToday').addEventListener('click', jumpToToday);
+document.getElementById('expandAll').addEventListener('click', ()=>{
+  for(let w=1; w<=18; w++) expandedWeeks.add(w);
+  render();
+});
+document.getElementById('collapseAll').addEventListener('click', ()=>{
+  expandedWeeks.clear();
+  render();
+});
+document.getElementById('exportBtn').addEventListener('click', exportData);
+document.getElementById('importFile').addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(file) importData(file);
+  e.target.value = '';
+});
+
+(async ()=>{
+  await loadData();
+  const today = todayLocal();
+  const currentWeek = Math.min(18, Math.max(1, weekOfDate(today)));
+  expandedWeeks.add(currentWeek);
+  render();
+})();
+</script>
+</body>
+</html>
